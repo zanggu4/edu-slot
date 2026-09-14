@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { FREE_SPIN_STRIPS, STRIPS, buildStrip, gridFromStops, spin } from '../reels'
+import { LINE_STRIPS, buildStrip, gridFromStops, spin } from '../reels'
+
+const STRIPS = LINE_STRIPS.normal
+const FREE_SPIN_STRIPS = LINE_STRIPS.free
 import { createRng } from '../rng'
 
 describe('reels', () => {
