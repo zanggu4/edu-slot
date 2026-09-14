@@ -563,3 +563,15 @@ export function paylineRows(lineNo: number): readonly number[] {
 }
 
 export const ALL_LINE_NUMBERS = Array.from({ length: LINE_COUNT }, (_, i) => i + 1)
+
+/** 최초 스캐터 3개 이상 시 모달 본문 */
+export const SCATTER_MODAL: { title: string; body: Sentence[] } = {
+  title: '스캐터가 3개 나왔습니다',
+  body: [
+    sent(S('scatter'), ' 스캐터(위치 상관없이 인정되는 그림)는 페이라인이나 웨이와 무관합니다. 화면 15칸 어디에 있든 개수만 셉니다.'),
+    sent('3개 이상이면 프리스핀(공짜 판) 10회에 들어갑니다. 프리스핀 동안은 베팅이 차감되지 않고, 모든 당첨이 ×2 됩니다.'),
+    sent('프리스핀 중 릴 2~4에 ', S('wild'), ' 와일드가 평소의 2배로 자주 나옵니다. 프리스핀 중 다시 스캐터 3개 이상이면 5회가 더해집니다.'),
+    sent('스캐터 자체 배당은 총 베팅 기준입니다. 3개 ×2, 4개 ×10, 5개 ×50.'),
+    sent('이 보너스는 공짜처럼 보이지만, 기계 환수율(약 94%)에 이미 포함된 몫입니다. 보너스가 잦은 기계는 그만큼 일반 판이 짭니다.'),
+  ],
+}
