@@ -7,8 +7,10 @@ import type {
   Grid,
   LineCount,
   Mode,
+  PaylineSetId,
   SpinEvaluation,
 } from '../engine/types'
+import { DEFAULT_PAYLINE_SET, getPaylineSet } from '../engine/paylines'
 import { totalBet } from '../engine/types'
 import { createRng, randomSeed, type Rng } from '../engine/rng'
 import { DEFAULT_PROFILE, gridFromStops, spinStops, stripsFor, type ProfileId, type Stops } from '../engine/reels'
@@ -46,6 +48,7 @@ export interface GameState {
   denom: Denom
   profile: ProfileId
   mode: Mode
+  paylineSet: PaylineSetId
   lines: LineCount
   betPerLine: BetPerLine
   freeSpin: FreeSpinState | null
@@ -76,6 +79,7 @@ export interface GameState {
   setDenom: (d: Denom) => void
   setProfile: (p: ProfileId) => void
   setMode: (m: Mode) => void
+  setPaylineSet: (id: PaylineSetId) => void
   setLines: (l: LineCount) => void
   setBetPerLine: (b: BetPerLine) => void
   maxBet: () => void
@@ -112,6 +116,16 @@ function loadProfile(): ProfileId {
   }
 }
 
+function loadPaylineSet(): PaylineSetId {
+  try {
+    const v = localStorage.getItem('slot-payline-set') as PaylineSetId | null
+    if (v) getPaylineSet(v)
+    return v ?? DEFAULT_PAYLINE_SET
+  } catch {
+    return DEFAULT_PAYLINE_SET
+  }
+}
+
 function loadMuted(): boolean {
   try {
     return localStorage.getItem('slot-muted') === '1'
@@ -125,7 +139,8 @@ export const useGame = create<GameState>((set, get) => ({
   denom: 100,
   profile: loadProfile(),
   mode: 'lines',
-  lines: 25,
+  paylineSet: loadPaylineSet(),
+  lines: getPaylineSet(loadPaylineSet()).lines.length,
   betPerLine: 1,
   freeSpin: null,
 
@@ -180,6 +195,26 @@ export const useGame = create<GameState>((set, get) => ({
     set(patch)
   },
 
+  setPaylineSet: (paylineSet) => {
+    const s = get()
+    if (s.spinning || s.freeSpin || s.paylineSet === paylineSet) return
+    try {
+      localStorage.setItem('slot-payline-set', paylineSet)
+    } catch {
+      /* ignore */
+    }
+    const plSet = getPaylineSet(paylineSet)
+    const patch: Partial<GameState> = { paylineSet, lines: plSet.lines.length }
+    if (s.evaluation && s.grid) {
+      const bet: BetConfig = { ...s.evaluation.bet, paylineSet, lines: plSet.lines.length }
+      const e = evaluateSpin(s.grid, bet, { isFreeSpin: s.evaluation.isFreeSpin })
+      patch.evaluation = e
+      patch.explanation = explain(e, { ...s.lastCtx, maxBetPressed: false, modeSwitched: true })
+      patch.hover = null
+    }
+    set(patch)
+  },
+
   setLines: (lines) => {
     const s = get()
     if (s.spinning || s.freeSpin) return
@@ -195,7 +230,7 @@ export const useGame = create<GameState>((set, get) => ({
   maxBet: () => {
     const s = get()
     if (s.spinning || s.freeSpin) return
-    set({ lines: 25, betPerLine: 10, maxBetPending: true })
+    set({ lines: getPaylineSet(s.paylineSet).lines.length, betPerLine: 10, maxBetPending: true })
     get().startSpin()
   },
 
@@ -203,7 +238,9 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get()
     if (s.spinning) return
     const fs = s.freeSpin
-    const bet: BetConfig = fs ? fs.lockedBet : { mode: s.mode, lines: s.lines, betPerLine: s.betPerLine }
+    const bet: BetConfig = fs
+      ? fs.lockedBet
+      : { mode: s.mode, lines: s.lines, betPerLine: s.betPerLine, paylineSet: s.paylineSet }
     const tb = totalBet(bet)
     const isFree = !!fs
     if (!isFree && s.balance < tb) return
@@ -335,8 +372,12 @@ export const useGame = create<GameState>((set, get) => ({
   },
 }))
 
-export function currentBet(s: Pick<GameState, 'freeSpin' | 'mode' | 'lines' | 'betPerLine'>): BetConfig {
-  return s.freeSpin ? s.freeSpin.lockedBet : { mode: s.mode, lines: s.lines, betPerLine: s.betPerLine }
+export function currentBet(
+  s: Pick<GameState, 'freeSpin' | 'mode' | 'lines' | 'betPerLine' | 'paylineSet'>,
+): BetConfig {
+  return s.freeSpin
+    ? s.freeSpin.lockedBet
+    : { mode: s.mode, lines: s.lines, betPerLine: s.betPerLine, paylineSet: s.paylineSet }
 }
 
 export function formatWon(credits: number, denom: Denom): string {

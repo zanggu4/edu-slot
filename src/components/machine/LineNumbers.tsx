@@ -1,5 +1,5 @@
 import { useGame } from '../../store/gameStore'
-import { PAYLINES } from '../../engine/paylines'
+import { getPaylineSet } from '../../engine/paylines'
 import { ROWS } from '../../engine/types'
 import s from './machine.module.css'
 
@@ -8,6 +8,8 @@ export function LineNumbers({ side }: { side: 'left' | 'right' }) {
   const lines = useGame((g) => g.lines)
   const freeSpin = useGame((g) => g.freeSpin)
   const hover = useGame((g) => g.hover)
+  const paylineSet = useGame((g) => g.paylineSet)
+  const PAYLINES = getPaylineSet(freeSpin ? freeSpin.lockedBet.paylineSet : paylineSet).lines
   const effMode = freeSpin ? freeSpin.lockedBet.mode : mode
   const effLines = freeSpin ? freeSpin.lockedBet.lines : lines
   const hoverLine = hover?.path ? PAYLINES.findIndex((rows) => rows.every((r, i) => hover.path![i]?.row === r)) + 1 : 0

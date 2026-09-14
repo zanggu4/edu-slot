@@ -8,7 +8,8 @@ import { evaluateLines, sumLineWins } from './evaluateLines'
 import { evaluateWays, sumWayWins } from './evaluateWays'
 import { evaluateScatter, freeSpinsAwarded } from './scatter'
 import { FREE_SPIN_MULTIPLIER } from './symbols'
-import type { BetConfig, Mode } from './types'
+import type { BetConfig, Mode, PaylineSetId } from './types'
+import { getPaylineSet } from './paylines'
 import { totalBet } from './types'
 
 interface SimResult {
@@ -33,9 +34,10 @@ interface SimResult {
   freeSessionWonTotal: number
 }
 
-export function simulate(mode: Mode, spins: number, seed: number, strips: StripSet = stripsFor(mode)): SimResult {
+export function simulate(mode: Mode, spins: number, seed: number, strips: StripSet = stripsFor(mode), paylineSet: PaylineSetId = 'classic25'): SimResult {
   const rng = createRng(seed)
-  const bet: BetConfig = { mode, lines: 25, betPerLine: 1 }
+  const set = getPaylineSet(paylineSet)
+  const bet: BetConfig = { mode, lines: set.lines.length, betPerLine: 1, paylineSet }
   const tb = totalBet(bet)
   const r: SimResult = {
     mode,
@@ -109,10 +111,10 @@ function pct(a: number, b: number): string {
 
 export function report(r: SimResult, seed: number, profile = ''): string {
   const lines: string[] = []
-  const tb = 25
+  const tb = r.totalPaid / Math.max(1, r.paidSpins)
   const perSession = r.freeSessionWonTotal / Math.max(1, r.freeSessions)
   lines.push(
-    `=== ${profile}${r.mode === 'lines' ? '페이라인 25줄 × 라인당 1' : '웨이즈 총 베팅 25'} · 유료 ${r.paidSpins.toLocaleString()}판 + 프리스핀 ${r.freeSpins.toLocaleString()}판 · seed ${seed} ===`,
+    `=== ${profile}${r.mode === 'lines' ? `페이라인 ${Math.round(tb)}줄 × 라인당 1` : '웨이즈 총 베팅 25'} · 유료 ${r.paidSpins.toLocaleString()}판 + 프리스핀 ${r.freeSpins.toLocaleString()}판 · seed ${seed} ===`,
   )
   lines.push(`낸 돈 ${r.totalPaid.toLocaleString()} · 받은 돈 ${r.totalWon.toLocaleString()}`)
   lines.push(`RTP 전체         ${pct(r.totalWon, r.totalPaid)}`)
@@ -133,11 +135,12 @@ export function report(r: SimResult, seed: number, profile = ''): string {
 }
 
 function parseArgs(argv: string[]) {
-  const out: { spins: number; seed: number; mode: 'lines' | 'ways' | 'both'; profile: ProfileId | 'both' } = {
+  const out: { spins: number; seed: number; mode: 'lines' | 'ways' | 'both'; profile: ProfileId | 'both'; set: PaylineSetId } = {
     spins: 1_000_000,
     seed: 20260914,
     mode: 'both',
     profile: 'both',
+    set: 'classic25',
   }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
@@ -145,19 +148,20 @@ function parseArgs(argv: string[]) {
     else if (a === '--seed') out.seed = Number(argv[++i])
     else if (a === '--mode') out.mode = argv[++i] as typeof out.mode
     else if (a === '--profile') out.profile = argv[++i] as typeof out.profile
+    else if (a === '--set') out.set = argv[++i] as PaylineSetId
   }
   return out
 }
 
 const isMain = typeof process !== 'undefined' && process.argv[1] && /simulate\.ts$/.test(process.argv[1])
 if (isMain) {
-  const { spins, seed, mode, profile } = parseArgs(process.argv.slice(2))
+  const { spins, seed, mode, profile, set } = parseArgs(process.argv.slice(2))
   const modes: Mode[] = mode === 'both' ? ['lines', 'ways'] : [mode]
   const profiles: ProfileId[] = profile === 'both' ? ['real', 'edu'] : [profile]
   for (const pf of profiles) {
     for (const m of modes) {
       const t0 = Date.now()
-      const r = simulate(m, spins, seed, stripsFor(m, pf))
+      const r = simulate(m, spins, seed, stripsFor(m, pf), set)
       console.log(report(r, seed, `[${PROFILES[pf].name}] `))
       console.log(`(${((Date.now() - t0) / 1000).toFixed(1)}s)\n`)
     }

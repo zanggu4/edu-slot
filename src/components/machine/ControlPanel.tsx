@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGame, currentBet, formatWon, type Denom } from '../../store/gameStore'
-import { totalBet, type BetPerLine, type LineCount } from '../../engine/types'
+import { totalBet, type BetPerLine, type PaylineSetId } from '../../engine/types'
+import { PAYLINE_SETS, getPaylineSet } from '../../engine/paylines'
 import { sfx, setMuted } from '../../audio/sfx'
 import s from './machine.module.css'
 
@@ -43,6 +44,7 @@ export function ControlPanel() {
   const locked = g.spinning || !!g.freeSpin
   const canSpin = !g.spinning && (!!g.freeSpin || g.balance >= tb)
   const shownWin = useCountUp(g.lastWin, !g.spinning)
+  const set = getPaylineSet(bet.paylineSet ?? g.paylineSet)
 
   useEffect(() => {
     setMuted(g.muted)
@@ -97,9 +99,34 @@ export function ControlPanel() {
         {seg<BetPerLine>([1, 2, 5, 10], bet.betPerLine, g.setBetPerLine)}
       </div>
       <div className={s.box}>
-        <span className={s.label}>{bet.mode === 'lines' ? '라인 수' : '웨이'}</span>
+        <span className={s.label}>
+          {bet.mode === 'lines' ? (
+            <>
+              라인 수 ·{' '}
+              <select
+                className={s.select}
+                value={bet.paylineSet ?? g.paylineSet}
+                onChange={(e) => {
+                  sfx.click()
+                  g.setPaylineSet(e.target.value as PaylineSetId)
+                }}
+                disabled={locked}
+                aria-label="페이라인 세트"
+                title={set.origin}
+              >
+                {PAYLINE_SETS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} 세트
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            '웨이'
+          )}
+        </span>
         {bet.mode === 'lines' ? (
-          seg<LineCount>([1, 5, 10, 25], bet.lines, g.setLines)
+          seg<number>(set.lineOptions, bet.lines, g.setLines)
         ) : (
           <div className={s.seg}>
             <button type="button" className={[s.segBtn, s.segOn].join(' ')} disabled>

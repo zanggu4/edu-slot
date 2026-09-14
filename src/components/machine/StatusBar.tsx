@@ -9,7 +9,8 @@ export function StatusBar() {
   const lines = useGame((g) => g.lines)
   const betPerLine = useGame((g) => g.betPerLine)
   const spinning = useGame((g) => g.spinning)
-  const tb = totalBet(currentBet({ freeSpin, mode, lines, betPerLine }))
+  const paylineSet = useGame((g) => g.paylineSet)
+  const tb = totalBet(currentBet({ freeSpin, mode, lines, betPerLine, paylineSet }))
   if (freeSpin) {
     return (
       <div className={[s.status, s.statusFree].join(' ')}>

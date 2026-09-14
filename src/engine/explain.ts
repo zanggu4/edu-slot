@@ -3,9 +3,9 @@
  * 설명 문장 규칙은 전부 이 파일에만 있다. UI는 Segment 배열을 그대로 렌더한다.
  */
 import type { Cell, LineResult, Mode, SpinEvaluation, SymbolId, WayResult } from './types'
-import { LINE_COUNT, REELS } from './types'
+import { REELS } from './types'
 import { SYMBOL_MAP, SYMBOLS, payFor } from './symbols'
-import { PAYLINES } from './paylines'
+import { getPaylineSet, type PaylineSetId } from './paylines'
 import { PROFILES, type ProfileId } from './reels'
 
 // ---------- 세그먼트 ----------
@@ -163,7 +163,11 @@ function buildSummary(e: SpinEvaluation, ctx: ExplainContext): Summary {
   }
 
   const modeNote = ctx.modeSwitched
-    ? sent(e.bet.mode === 'ways' ? '방금 결과를 웨이즈로 보면:' : '방금 결과를 페이라인으로 보면:')
+    ? sent(
+        e.bet.mode === 'ways'
+          ? '방금 결과를 웨이즈로 보면:'
+          : `방금 결과를 페이라인(${getPaylineSet(e.bet.paylineSet).name})으로 보면:`,
+      )
     : null
 
   return { paid, won, net, headline, notes, modeNote }
@@ -565,11 +569,9 @@ export function statsFooter(profile: ProfileId): Sentence {
   return sent(`많이 돌릴수록 환수율은 ${p.rtp}% 근처로 수렴합니다. 그 ${100 - p.rtp}%가 카지노의 몫입니다.`)
 }
 
-export function paylineRows(lineNo: number): readonly number[] {
-  return PAYLINES[lineNo - 1]
+export function paylineRows(lineNo: number, setId?: PaylineSetId): readonly number[] {
+  return getPaylineSet(setId).lines[lineNo - 1]
 }
-
-export const ALL_LINE_NUMBERS = Array.from({ length: LINE_COUNT }, (_, i) => i + 1)
 
 /** 최초 스캐터 3개 이상 시 모달 본문 */
 export function scatterModal(profile: ProfileId): { title: string; body: Sentence[] } {

@@ -1,12 +1,13 @@
 import { useGame } from '../../store/gameStore'
-import { PAYLINES, paylineCells } from '../../engine/paylines'
+import { getPaylineSet, paylineCells } from '../../engine/paylines'
+import type { PaylineSetId } from '../../engine/types'
 import { ruleSummary, SYMBOL_RULES } from '../../engine/explain'
 import { SymbolIcon } from '../../assets/symbols'
 import { ExplainLine } from './ExplainLine'
 import s from './explain.module.css'
 
-function LineThumb({ lineNo }: { lineNo: number }) {
-  const rows = PAYLINES[lineNo - 1]
+function LineThumb({ lineNo, setId }: { lineNo: number; setId: PaylineSetId }) {
+  const rows = getPaylineSet(setId).lines[lineNo - 1]
   const setHover = useGame((g) => g.setHover)
   const hasResult = useGame((g) => g.grid !== null)
   const cw = 20
@@ -15,7 +16,7 @@ function LineThumb({ lineNo }: { lineNo: number }) {
   return (
     <div
       className={s.thumb}
-      onMouseEnter={() => hasResult && setHover({ cells: paylineCells(lineNo), path: paylineCells(lineNo), wildCells: [] })}
+      onMouseEnter={() => hasResult && setHover({ cells: paylineCells(lineNo, setId), path: paylineCells(lineNo, setId), wildCells: [] })}
       onMouseLeave={() => setHover(null)}
     >
       <svg viewBox={`0 0 ${cw * 5} ${ch * 3}`}>
@@ -34,6 +35,8 @@ function LineThumb({ lineNo }: { lineNo: number }) {
 
 export function RulesSummary({ compact }: { compact?: boolean }) {
   const profile = useGame((g) => g.profile)
+  const setId = useGame((g) => g.paylineSet)
+  const set = getPaylineSet(setId)
   const RULE_SUMMARY = ruleSummary(profile)
   return (
     <div className={s.rules}>
@@ -76,10 +79,12 @@ export function RulesSummary({ compact }: { compact?: boolean }) {
         </tbody>
       </table>
 
-      <h3 className={s.h}>페이라인 25개 (마우스를 올리면 기계에 표시)</h3>
+      <h3 className={s.h}>
+        페이라인 {set.lines.length}개 · {set.name} 세트 <small>{set.origin} · 마우스를 올리면 기계에 표시</small>
+      </h3>
       <div className={s.thumbs}>
-        {PAYLINES.map((_, i) => (
-          <LineThumb key={i} lineNo={i + 1} />
+        {set.lines.map((_, i) => (
+          <LineThumb key={`${setId}-${i}`} lineNo={i + 1} setId={setId} />
         ))}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import type { BetConfig, Cell, Grid, LineResult, SymbolId } from './types'
-import { LINE_COUNT, REELS } from './types'
-import { PAYLINES } from './paylines'
+import { REELS } from './types'
+import { getPaylineSet } from './paylines'
 import { isScatter, isWild, payFor } from './symbols'
 
 function symbolsOnLine(grid: Grid, rows: readonly number[]): SymbolId[] {
@@ -27,8 +27,7 @@ function runFrom(symbols: SymbolId[], start: number): { symbol: SymbolId | null;
   return { symbol: base, count, wildReels }
 }
 
-function evaluateOneLine(grid: Grid, lineNo: number, bet: BetConfig): LineResult {
-  const rows = PAYLINES[lineNo - 1]
+function evaluateOneLine(grid: Grid, lineNo: number, bet: BetConfig, rows: readonly number[]): LineResult {
   const cells: Cell[] = rows.map((row, reel) => ({ reel, row }))
   const symbols = symbolsOnLine(grid, rows)
   const active = bet.mode === 'lines' ? lineNo <= bet.lines : true
@@ -81,13 +80,10 @@ function evaluateOneLine(grid: Grid, lineNo: number, bet: BetConfig): LineResult
   }
 }
 
-/** 25개 라인 전부 판정. 활성/비활성 모두 포함. */
+/** 세트의 라인 전부 판정. 활성/비활성 모두 포함. */
 export function evaluateLines(grid: Grid, bet: BetConfig): LineResult[] {
-  const out: LineResult[] = []
-  for (let lineNo = 1; lineNo <= LINE_COUNT; lineNo++) {
-    out.push(evaluateOneLine(grid, lineNo, bet))
-  }
-  return out
+  const set = getPaylineSet(bet.paylineSet)
+  return set.lines.map((rows, i) => evaluateOneLine(grid, i + 1, bet, rows))
 }
 
 export function sumLineWins(lines: LineResult[]): number {

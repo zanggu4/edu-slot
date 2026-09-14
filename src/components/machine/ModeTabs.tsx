@@ -28,7 +28,7 @@ export function ModeTabs() {
   )
   return (
     <div className={s.tabs} role="tablist">
-      {tab('lines', '페이라인 25')}
+      {tab('lines', '페이라인')}
       {tab('ways', '243 웨이즈')}
       <div className={s.profileSwitch} role="group" aria-label="기계 설정">
         {(Object.keys(PROFILES) as ProfileId[]).map((id) => (

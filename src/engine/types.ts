@@ -13,7 +13,6 @@ export type SymbolId =
 
 export const REELS = 5
 export const ROWS = 3
-export const LINE_COUNT = 25
 export const WAYS_DIVISOR = 25
 
 /** grid[reel][row] — 릴 0..4, 행 0(위)..2(아래) */
@@ -25,11 +24,15 @@ export interface Cell {
 }
 
 export type Mode = 'lines' | 'ways'
-export type LineCount = 1 | 5 | 10 | 25
+export type LineCount = number
 export type BetPerLine = 1 | 2 | 5 | 10
+
+export type PaylineSetId = 'classic5' | 'novo9' | 'netent10' | 'igt20' | 'classic25' | 'wms30'
 
 export interface BetConfig {
   mode: Mode
+  /** 페이라인 세트. 생략 시 25라인 */
+  paylineSet?: PaylineSetId
   /** 페이라인 모드에서 활성 라인 수. 웨이즈 모드에서는 무시(항상 25로 환산) */
   lines: LineCount
   /** 라인당 베팅. 웨이즈 모드에서는 웨이당 베팅(= 총베팅 / 25) */
