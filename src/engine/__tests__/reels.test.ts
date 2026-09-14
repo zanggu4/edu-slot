@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { LINE_STRIPS, buildStrip, gridFromStops, spin } from '../reels'
+import { PROFILES, buildStrip, gridFromStops, spin, stripsFor } from '../reels'
 
-const STRIPS = LINE_STRIPS.normal
-const FREE_SPIN_STRIPS = LINE_STRIPS.free
+const STRIPS = stripsFor('lines', 'real').normal
+const FREE_SPIN_STRIPS = stripsFor('lines', 'real').free
 import { createRng } from '../rng'
 
 describe('reels', () => {
@@ -36,6 +36,17 @@ describe('reels', () => {
     expect(a).toEqual(b)
     expect(a).toHaveLength(5)
     expect(a[0]).toHaveLength(3)
+  })
+
+  it('모든 프로필·모드에서 와일드는 릴 2,3,4에만, 스캐터는 모든 릴에', () => {
+    for (const pf of Object.keys(PROFILES) as ('real' | 'edu')[]) {
+      for (const mode of ['lines', 'ways'] as const) {
+        const set = stripsFor(mode, pf)
+        expect(set.normal[0]).not.toContain('wild')
+        expect(set.normal[4]).not.toContain('wild')
+        for (let r = 0; r < 5; r++) expect(set.normal[r]).toContain('scatter')
+      }
+    }
   })
 
   it('정지 위치가 스트립 끝이면 감아서 이어짐', () => {

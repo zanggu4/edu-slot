@@ -6,6 +6,7 @@ import type { Cell, LineResult, Mode, SpinEvaluation, SymbolId, WayResult } from
 import { LINE_COUNT, REELS } from './types'
 import { SYMBOL_MAP, SYMBOLS, payFor } from './symbols'
 import { PAYLINES } from './paylines'
+import { PROFILES, type ProfileId } from './reels'
 
 // ---------- 세그먼트 ----------
 
@@ -546,17 +547,23 @@ export const SYMBOL_RULES: SymbolRule[] = SYMBOLS.map((s) => {
   return { id: s.id, name: s.name, pays: s.pays, pay2: s.pay2, note }
 })
 
-export const RULE_SUMMARY: Sentence[] = [
-  sent('릴 5개 × 3줄. 매 판 각 릴이 무작위로 멈춥니다.'),
-  sent('페이라인 모드: 정해진 25개 줄 위에서 왼쪽 릴부터 같은 그림이 3개 이상 이어지면 당첨. 중간에 끊기면 그 앞까지만 인정.'),
-  sent('웨이즈 모드: 줄이 없습니다. 릴1부터 인접 릴에 같은 그림이 하나라도 있으면 이어진 것으로 봅니다. 웨이 수 = 각 릴의 해당 그림 개수의 곱.'),
-  sent('배당은 라인당(웨이당) 베팅 기준입니다. 총 베팅 = 라인 수 × 라인당 베팅.'),
-  sent('한 라인에서는 가장 높은 배당 하나만 지급됩니다.'),
-  sent('프리스핀: 스캐터 3개 이상이면 10회. 베팅 차감 없음, 모든 당첨 ×2. 프리스핀 중 다시 3개 이상이면 +5회.'),
-  sent('이 기계의 목표 환수율은 약 94%입니다. 오래 돌릴수록 낸 돈의 약 6%가 사라집니다.'),
-]
+export function ruleSummary(profile: ProfileId): Sentence[] {
+  const p = PROFILES[profile]
+  return [
+    sent('릴 5개 × 3줄. 매 판 각 릴이 무작위로 멈춥니다.'),
+    sent('페이라인 모드: 정해진 25개 줄 위에서 왼쪽 릴부터 같은 그림이 3개 이상 이어지면 당첨. 중간에 끊기면 그 앞까지만 인정.'),
+    sent('웨이즈 모드: 줄이 없습니다. 릴1부터 인접 릴에 같은 그림이 하나라도 있으면 이어진 것으로 봅니다. 웨이 수 = 각 릴의 해당 그림 개수의 곱.'),
+    sent('배당은 라인당(웨이당) 베팅 기준입니다. 총 베팅 = 라인 수 × 라인당 베팅.'),
+    sent('한 라인에서는 가장 높은 배당 하나만 지급됩니다.'),
+    sent('프리스핀: 스캐터 3개 이상이면 10회. 베팅 차감 없음, 모든 당첨 ×2. 프리스핀 중 다시 3개 이상이면 +5회.'),
+    sent(`지금 기계는 "${p.name}" 설정입니다. ${p.description} 오래 돌릴수록 낸 돈의 약 ${100 - p.rtp}%가 사라집니다.`),
+  ]
+}
 
-export const STATS_FOOTER: Sentence = sent('많이 돌릴수록 환수율은 94% 근처로 수렴합니다. 그 6%가 카지노의 몫입니다.')
+export function statsFooter(profile: ProfileId): Sentence {
+  const p = PROFILES[profile]
+  return sent(`많이 돌릴수록 환수율은 ${p.rtp}% 근처로 수렴합니다. 그 ${100 - p.rtp}%가 카지노의 몫입니다.`)
+}
 
 export function paylineRows(lineNo: number): readonly number[] {
   return PAYLINES[lineNo - 1]
@@ -565,13 +572,16 @@ export function paylineRows(lineNo: number): readonly number[] {
 export const ALL_LINE_NUMBERS = Array.from({ length: LINE_COUNT }, (_, i) => i + 1)
 
 /** 최초 스캐터 3개 이상 시 모달 본문 */
-export const SCATTER_MODAL: { title: string; body: Sentence[] } = {
-  title: '스캐터가 3개 나왔습니다',
-  body: [
-    sent(S('scatter'), ' 스캐터(위치 상관없이 인정되는 그림)는 페이라인이나 웨이와 무관합니다. 화면 15칸 어디에 있든 개수만 셉니다.'),
-    sent('3개 이상이면 프리스핀(공짜 판) 10회에 들어갑니다. 프리스핀 동안은 베팅이 차감되지 않고, 모든 당첨이 ×2 됩니다.'),
-    sent('프리스핀 중 릴 2~4에 ', S('wild'), ' 와일드가 평소의 2배로 자주 나옵니다. 프리스핀 중 다시 스캐터 3개 이상이면 5회가 더해집니다.'),
-    sent('스캐터 자체 배당은 총 베팅 기준입니다. 3개 ×2, 4개 ×10, 5개 ×50.'),
-    sent('이 보너스는 공짜처럼 보이지만, 기계 환수율(약 94%)에 이미 포함된 몫입니다. 보너스가 잦은 기계는 그만큼 일반 판이 짭니다.'),
-  ],
+export function scatterModal(profile: ProfileId): { title: string; body: Sentence[] } {
+  const p = PROFILES[profile]
+  return {
+    title: '스캐터가 3개 나왔습니다',
+    body: [
+      sent(S('scatter'), ' 스캐터(위치 상관없이 인정되는 그림)는 페이라인이나 웨이와 무관합니다. 화면 15칸 어디에 있든 개수만 셉니다.'),
+      sent('3개 이상이면 프리스핀(공짜 판) 10회에 들어갑니다. 프리스핀 동안은 베팅이 차감되지 않고, 모든 당첨이 ×2 됩니다.'),
+      sent('프리스핀 중 릴 2~4에 ', S('wild'), ' 와일드가 평소의 2배로 자주 나옵니다. 프리스핀 중 다시 스캐터 3개 이상이면 5회가 더해집니다.'),
+      sent('스캐터 자체 배당은 총 베팅 기준입니다. 3개 ×2, 4개 ×10, 5개 ×50.'),
+      sent(`이 보너스는 약 ${p.bonusEvery}판에 1번꼴로 나옵니다. 공짜처럼 보이지만 기계 환수율(약 ${p.rtp}%)에 이미 포함된 몫입니다. 보너스가 잦은 기계는 그만큼 일반 판이 짭니다.`),
+    ],
+  }
 }

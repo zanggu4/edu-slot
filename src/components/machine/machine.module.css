@@ -90,6 +90,30 @@
 .tab:disabled {
   opacity: 0.5;
 }
+.profileSwitch {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  padding-bottom: 2px;
+}
+.profileBtn {
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid #343a5e;
+  background: #1c2138;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.profileOn {
+  background: #2b2250;
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.profileBtn:disabled {
+  opacity: 0.5;
+}
 
 .reelArea {
   display: grid;

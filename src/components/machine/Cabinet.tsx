@@ -1,4 +1,5 @@
 import { useGame } from '../../store/gameStore'
+import { PROFILES } from '../../engine/reels'
 import { ModeTabs } from './ModeTabs'
 import { ReelWindow } from './ReelWindow'
 import { LineNumbers } from './LineNumbers'
@@ -9,13 +10,15 @@ import s from './machine.module.css'
 export function Cabinet() {
   const evaluation = useGame((g) => g.evaluation)
   const spinning = useGame((g) => g.spinning)
+  const profile = useGame((g) => g.profile)
+  const pf = PROFILES[profile]
   const win = !spinning && !!evaluation && evaluation.totalWin > 0
   return (
     <div className={s.cabinet}>
       <div className={s.marquee}>
         <div>
           <div className={s.title}>LUCKY LEARN 5</div>
-          <div className={s.subtitle}>교육용 · 가상 크레딧 · 환수율 약 94%</div>
+          <div className={s.subtitle}>가상 크레딧 · {pf.name} 설정 · 환수율 약 {pf.rtp}% · 프리스핀 약 1/{pf.bonusEvery}판</div>
         </div>
         <div className={[s.lamps, win ? s.lampsWin : ''].join(' ')} aria-hidden="true">
           {Array.from({ length: 8 }, (_, i) => (

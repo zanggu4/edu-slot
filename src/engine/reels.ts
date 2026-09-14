@@ -5,11 +5,45 @@ import type { Rng } from './rng'
 /** 릴별 심볼 가중치. 스트립은 이 가중치를 고르게 펼쳐서 만든다. */
 export type WeightTable = Partial<Record<SymbolId, number>>
 
+export type ProfileId = 'real' | 'edu'
+
+export interface MachineProfile {
+  id: ProfileId
+  name: string
+  /** 목표 환수율 (%) */
+  rtp: number
+  /** 프리스핀 진입 빈도 (1/N 판) */
+  bonusEvery: number
+  description: string
+  lineWeights: WeightTable[]
+  waysWeights: WeightTable[]
+}
+
 /**
- * 릴 5개의 가중치. 와일드는 릴 2,3,4(인덱스 1..3)에만.
- * 시뮬레이터(`pnpm sim`)로 RTP ≈ 94%, 스캐터 3개↑ ≈ 1/40 에 맞춰 튜닝한 값.
+ * 실제형: 지상 카지노 일반치를 참고한 튜닝. 환수율 약 90%, 프리스핀 약 1/150판.
+ * 릴당 스캐터 1개, 스트립 32칸. 시뮬레이터(`pnpm sim --profile real`)로 맞춘 값.
  */
-export const REEL_WEIGHTS: WeightTable[] = [
+const REAL_LINE_WEIGHTS: WeightTable[] = [
+  { cherry: 4, lemon: 5, orange: 7, grape: 5, bell: 4, diamond: 4, seven: 2, scatter: 1 },
+  { cherry: 4, lemon: 6, orange: 4, grape: 6, bell: 4, diamond: 4, seven: 3, wild: 1, scatter: 1 },
+  { cherry: 5, lemon: 4, orange: 4, grape: 7, bell: 4, diamond: 4, seven: 3, wild: 1, scatter: 1 },
+  { cherry: 3, lemon: 6, orange: 3, grape: 13, bell: 3, diamond: 2, seven: 1, wild: 1, scatter: 1 },
+  { cherry: 4, lemon: 4, orange: 6, grape: 9, bell: 4, diamond: 2, seven: 2, scatter: 1 },
+]
+
+const REAL_WAYS_WEIGHTS: WeightTable[] = [
+  { cherry: 10, lemon: 10, orange: 5, grape: 2, bell: 1, diamond: 1, seven: 2, scatter: 1 },
+  { cherry: 1, lemon: 2, orange: 11, grape: 10, bell: 2, diamond: 1, seven: 2, wild: 1, scatter: 1 },
+  { cherry: 2, lemon: 2, orange: 3, grape: 4, bell: 11, diamond: 7, seven: 1, wild: 1, scatter: 1 },
+  { cherry: 10, lemon: 11, orange: 2, grape: 2, bell: 1, diamond: 2, seven: 2, wild: 1, scatter: 1 },
+  { cherry: 1, lemon: 3, orange: 11, grape: 4, bell: 4, diamond: 5, seven: 2, scatter: 1 },
+]
+
+/**
+ * 교육용: 이벤트가 자주 나오도록 튜닝. 환수율 약 94%, 프리스핀 약 1/40판.
+ * 릴당 스캐터 2개(웨이즈 3개), 스트립 41칸(웨이즈 61칸).
+ */
+const EDU_LINE_WEIGHTS: WeightTable[] = [
   { cherry: 11, lemon: 8, orange: 7, grape: 5, bell: 4, diamond: 2, seven: 2, scatter: 2 },
   { cherry: 7, lemon: 8, orange: 8, grape: 7, bell: 3, diamond: 3, seven: 2, wild: 1, scatter: 2 },
   { cherry: 8, lemon: 8, orange: 7, grape: 5, bell: 4, diamond: 3, seven: 3, wild: 1, scatter: 2 },
@@ -18,19 +52,45 @@ export const REEL_WEIGHTS: WeightTable[] = [
 ]
 
 /**
- * 웨이즈 모드 릴 가중치 (스트립 길이 61, 스캐터 3).
- * 같은 배당표로 243웨이를 판정하면 k개 일치 확률이 페이라인의 약 3^k 배가 되어
+ * 웨이즈 모드는 같은 배당표로 243웨이를 판정하면 k개 일치 확률이 페이라인의 약 3^k 배가 되어
  * 같은 릴로는 환수율이 200%를 넘는다. 그래서 릴마다 주력 심볼을 엇갈리게(릴1·4: 체리/레몬,
  * 릴2·5: 오렌지/포도, 릴3: 벨/다이아) 두어 연속 일치를 드물게 만들었다. 실제 243웨이 기계는
  * 배당표 자체를 훨씬 낮게 잡는다.
  */
-export const WAYS_REEL_WEIGHTS: WeightTable[] = [
+const EDU_WAYS_WEIGHTS: WeightTable[] = [
   { cherry: 19, lemon: 19, orange: 9, grape: 3, bell: 2, diamond: 2, seven: 4, scatter: 3 },
   { cherry: 3, lemon: 3, orange: 22, grape: 18, bell: 4, diamond: 1, seven: 4, wild: 1, scatter: 3 },
   { cherry: 3, lemon: 3, orange: 3, grape: 7, bell: 21, diamond: 14, seven: 4, wild: 1, scatter: 3 },
   { cherry: 19, lemon: 19, orange: 3, grape: 4, bell: 3, diamond: 3, seven: 4, wild: 1, scatter: 3 },
   { cherry: 1, lemon: 2, orange: 22, grape: 11, bell: 7, diamond: 10, seven: 4, scatter: 3 },
 ]
+
+export const PROFILES: Record<ProfileId, MachineProfile> = {
+  real: {
+    id: 'real',
+    name: '실제형',
+    rtp: 90,
+    bonusEvery: 150,
+    description: '지상 카지노 슬롯의 일반적인 수준. 환수율 약 90%, 프리스핀 약 150판에 1번.',
+    lineWeights: REAL_LINE_WEIGHTS,
+    waysWeights: REAL_WAYS_WEIGHTS,
+  },
+  edu: {
+    id: 'edu',
+    name: '교육용',
+    rtp: 94,
+    bonusEvery: 40,
+    description: '규칙을 빨리 보기 위해 이벤트를 자주 나오게 조정. 환수율 약 94%, 프리스핀 약 40판에 1번.',
+    lineWeights: EDU_LINE_WEIGHTS,
+    waysWeights: EDU_WAYS_WEIGHTS,
+  },
+}
+
+export const DEFAULT_PROFILE: ProfileId = 'real'
+
+/** 호환용 별칭 (교육용 페이라인 가중치) */
+export const REEL_WEIGHTS = EDU_LINE_WEIGHTS
+export const WAYS_REEL_WEIGHTS = EDU_WAYS_WEIGHTS
 
 /** 프리스핀 중 릴 2~4 와일드 가중치 배수 */
 export const FREE_SPIN_WILD_MULTIPLIER = 2
@@ -79,14 +139,17 @@ export function makeStripSet(weights: WeightTable[]): StripSet {
   }
 }
 
-/** 페이라인 모드용 스트립 */
-export const LINE_STRIPS: StripSet = makeStripSet(REEL_WEIGHTS)
-/** 웨이즈 모드용 스트립 (같은 배당표로 243웨이는 훨씬 잘 맞으므로 릴을 따로 둔다) */
-export const WAYS_STRIPS: StripSet = makeStripSet(WAYS_REEL_WEIGHTS)
-
-export function stripsFor(mode: Mode): StripSet {
-  return mode === 'ways' ? WAYS_STRIPS : LINE_STRIPS
+const STRIP_SETS: Record<ProfileId, { lines: StripSet; ways: StripSet }> = {
+  real: { lines: makeStripSet(PROFILES.real.lineWeights), ways: makeStripSet(PROFILES.real.waysWeights) },
+  edu: { lines: makeStripSet(PROFILES.edu.lineWeights), ways: makeStripSet(PROFILES.edu.waysWeights) },
 }
+
+export function stripsFor(mode: Mode, profile: ProfileId = DEFAULT_PROFILE): StripSet {
+  return STRIP_SETS[profile][mode]
+}
+
+/** 호환용: 교육용 페이라인 스트립 */
+export const LINE_STRIPS: StripSet = STRIP_SETS.edu.lines
 
 export interface SpinOptions {
   freeSpin?: boolean
@@ -98,7 +161,7 @@ export interface SpinOptions {
 export type Stops = number[]
 
 function pick(opts: SpinOptions): SymbolId[][] {
-  const set = opts.strips ?? LINE_STRIPS
+  const set = opts.strips ?? stripsFor('lines')
   return opts.freeSpin ? set.free : set.normal
 }
 

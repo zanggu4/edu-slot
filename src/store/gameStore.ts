@@ -11,7 +11,7 @@ import type {
 } from '../engine/types'
 import { totalBet } from '../engine/types'
 import { createRng, randomSeed, type Rng } from '../engine/rng'
-import { gridFromStops, spinStops, stripsFor, type Stops } from '../engine/reels'
+import { DEFAULT_PROFILE, gridFromStops, spinStops, stripsFor, type ProfileId, type Stops } from '../engine/reels'
 import { evaluateSpin } from '../engine/evaluate'
 import { freeSpinsAwarded } from '../engine/scatter'
 import { FREE_SPIN_MULTIPLIER } from '../engine/symbols'
@@ -44,6 +44,7 @@ export interface Highlight {
 export interface GameState {
   balance: number
   denom: Denom
+  profile: ProfileId
   mode: Mode
   lines: LineCount
   betPerLine: BetPerLine
@@ -59,6 +60,7 @@ export interface GameState {
   lastCtx: ExplainContext
   /** 이번 판이 어느 스트립(모드/프리스핀)으로 돌았는지 — 릴 애니메이션용 */
   spinStripMode: Mode
+  spinStripProfile: ProfileId
   spinWasFree: boolean
 
   stats: Stats
@@ -72,6 +74,7 @@ export interface GameState {
   lastWin: number
 
   setDenom: (d: Denom) => void
+  setProfile: (p: ProfileId) => void
   setMode: (m: Mode) => void
   setLines: (l: LineCount) => void
   setBetPerLine: (b: BetPerLine) => void
@@ -100,6 +103,15 @@ const initialStats = (): Stats => ({
   freeSpinSessions: 0,
 })
 
+function loadProfile(): ProfileId {
+  try {
+    const v = localStorage.getItem('slot-profile')
+    return v === 'edu' || v === 'real' ? v : DEFAULT_PROFILE
+  } catch {
+    return DEFAULT_PROFILE
+  }
+}
+
 function loadMuted(): boolean {
   try {
     return localStorage.getItem('slot-muted') === '1'
@@ -111,6 +123,7 @@ function loadMuted(): boolean {
 export const useGame = create<GameState>((set, get) => ({
   balance: START_BALANCE,
   denom: 100,
+  profile: loadProfile(),
   mode: 'lines',
   lines: 25,
   betPerLine: 1,
@@ -125,6 +138,7 @@ export const useGame = create<GameState>((set, get) => ({
   explanation: null,
   lastCtx: DEFAULT_CONTEXT,
   spinStripMode: 'lines',
+  spinStripProfile: loadProfile(),
   spinWasFree: false,
 
   stats: initialStats(),
@@ -138,6 +152,17 @@ export const useGame = create<GameState>((set, get) => ({
   lastWin: 0,
 
   setDenom: (denom) => set({ denom }),
+
+  setProfile: (profile) => {
+    const s = get()
+    if (s.spinning || s.freeSpin || s.profile === profile) return
+    try {
+      localStorage.setItem('slot-profile', profile)
+    } catch {
+      /* ignore */
+    }
+    set({ profile })
+  },
 
   setMode: (mode) => {
     const s = get()
@@ -183,7 +208,7 @@ export const useGame = create<GameState>((set, get) => ({
     const isFree = !!fs
     if (!isFree && s.balance < tb) return
 
-    const strips = stripsFor(bet.mode)
+    const strips = stripsFor(bet.mode, s.profile)
     const stops = spinStops(rng, { freeSpin: isFree, strips })
     const grid = gridFromStops(stops, { freeSpin: isFree, strips })
     const evaluation = evaluateSpin(grid, bet, { isFreeSpin: isFree })
@@ -200,6 +225,7 @@ export const useGame = create<GameState>((set, get) => ({
       balance: isFree ? s.balance : s.balance - tb,
       freeSpin: fs ? { ...fs, remaining: fs.remaining - 1 } : null,
       spinStripMode: bet.mode,
+      spinStripProfile: s.profile,
       spinWasFree: isFree,
       lastWin: 0,
     })

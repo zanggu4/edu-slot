@@ -1,9 +1,9 @@
 /**
- * RTP 시뮬레이터. `pnpm sim [--spins N] [--seed S] [--mode lines|ways|both]`
+ * RTP 시뮬레이터. `pnpm sim [--spins N] [--seed S] [--mode lines|ways|both] [--profile real|edu|both]`
  * 페이라인 25줄 × 라인당 1 (총 25), 웨이즈 총 25 기준. 프리스핀 포함.
  */
 import { createRng } from './rng'
-import { spin, stripsFor, type StripSet } from './reels'
+import { PROFILES, spin, stripsFor, type ProfileId, type StripSet } from './reels'
 import { evaluateLines, sumLineWins } from './evaluateLines'
 import { evaluateWays, sumWayWins } from './evaluateWays'
 import { evaluateScatter, freeSpinsAwarded } from './scatter'
@@ -107,12 +107,12 @@ function pct(a: number, b: number): string {
   return ((a / b) * 100).toFixed(2) + '%'
 }
 
-export function report(r: SimResult, seed: number): string {
+export function report(r: SimResult, seed: number, profile = ''): string {
   const lines: string[] = []
   const tb = 25
   const perSession = r.freeSessionWonTotal / Math.max(1, r.freeSessions)
   lines.push(
-    `=== ${r.mode === 'lines' ? '페이라인 25줄 × 라인당 1' : '웨이즈 총 베팅 25'} · 유료 ${r.paidSpins.toLocaleString()}판 + 프리스핀 ${r.freeSpins.toLocaleString()}판 · seed ${seed} ===`,
+    `=== ${profile}${r.mode === 'lines' ? '페이라인 25줄 × 라인당 1' : '웨이즈 총 베팅 25'} · 유료 ${r.paidSpins.toLocaleString()}판 + 프리스핀 ${r.freeSpins.toLocaleString()}판 · seed ${seed} ===`,
   )
   lines.push(`낸 돈 ${r.totalPaid.toLocaleString()} · 받은 돈 ${r.totalWon.toLocaleString()}`)
   lines.push(`RTP 전체         ${pct(r.totalWon, r.totalPaid)}`)
@@ -133,28 +133,33 @@ export function report(r: SimResult, seed: number): string {
 }
 
 function parseArgs(argv: string[]) {
-  const out: { spins: number; seed: number; mode: 'lines' | 'ways' | 'both' } = {
+  const out: { spins: number; seed: number; mode: 'lines' | 'ways' | 'both'; profile: ProfileId | 'both' } = {
     spins: 1_000_000,
     seed: 20260914,
     mode: 'both',
+    profile: 'both',
   }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--spins') out.spins = Number(argv[++i])
     else if (a === '--seed') out.seed = Number(argv[++i])
     else if (a === '--mode') out.mode = argv[++i] as typeof out.mode
+    else if (a === '--profile') out.profile = argv[++i] as typeof out.profile
   }
   return out
 }
 
 const isMain = typeof process !== 'undefined' && process.argv[1] && /simulate\.ts$/.test(process.argv[1])
 if (isMain) {
-  const { spins, seed, mode } = parseArgs(process.argv.slice(2))
+  const { spins, seed, mode, profile } = parseArgs(process.argv.slice(2))
   const modes: Mode[] = mode === 'both' ? ['lines', 'ways'] : [mode]
-  for (const m of modes) {
-    const t0 = Date.now()
-    const r = simulate(m, spins, seed)
-    console.log(report(r, seed))
-    console.log(`(${((Date.now() - t0) / 1000).toFixed(1)}s)\n`)
+  const profiles: ProfileId[] = profile === 'both' ? ['real', 'edu'] : [profile]
+  for (const pf of profiles) {
+    for (const m of modes) {
+      const t0 = Date.now()
+      const r = simulate(m, spins, seed, stripsFor(m, pf))
+      console.log(report(r, seed, `[${PROFILES[pf].name}] `))
+      console.log(`(${((Date.now() - t0) / 1000).toFixed(1)}s)\n`)
+    }
   }
 }

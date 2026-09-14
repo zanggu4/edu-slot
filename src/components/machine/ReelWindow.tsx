@@ -28,6 +28,7 @@ export function ReelWindow() {
   const spinId = useGame((g) => g.spinId)
   const spinning = useGame((g) => g.spinning)
   const stripMode = useGame((g) => g.spinStripMode)
+  const stripProfile = useGame((g) => g.spinStripProfile)
   const wasFree = useGame((g) => g.spinWasFree)
   const settle = useGame((g) => g.settle)
   const explanation = useGame((g) => g.explanation)
@@ -35,7 +36,7 @@ export function ReelWindow() {
   const hover = useGame((g) => g.hover)
   const reduced = usePrefersReducedMotion()
 
-  const stripSet = stripsFor(stripMode)
+  const stripSet = stripsFor(stripMode, stripProfile)
   const strips = wasFree ? stripSet.free : stripSet.normal
 
   const stoppedRef = useRef(0)

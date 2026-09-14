@@ -1,5 +1,5 @@
 import { useGame } from '../../store/gameStore'
-import { SCATTER_MODAL } from '../../engine/explain'
+import { scatterModal } from '../../engine/explain'
 import { SymbolIcon } from '../../assets/symbols'
 import { ExplainLine } from '../explain/ExplainLine'
 import s from '../explain/explain.module.css'
@@ -8,7 +8,9 @@ export function FirstScatterModal() {
   const open = useGame((g) => g.scatterModalOpen)
   const close = useGame((g) => g.closeScatterModal)
   const count = useGame((g) => g.evaluation?.scatter.count ?? 0)
+  const profile = useGame((g) => g.profile)
   if (!open) return null
+  const SCATTER_MODAL = scatterModal(profile)
   return (
     <div className={s.modalBack} role="dialog" aria-modal="true" aria-labelledby="scatter-title">
       <div className={s.modal}>

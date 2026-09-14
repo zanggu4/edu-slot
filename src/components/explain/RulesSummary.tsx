@@ -1,6 +1,6 @@
 import { useGame } from '../../store/gameStore'
 import { PAYLINES, paylineCells } from '../../engine/paylines'
-import { RULE_SUMMARY, SYMBOL_RULES } from '../../engine/explain'
+import { ruleSummary, SYMBOL_RULES } from '../../engine/explain'
 import { SymbolIcon } from '../../assets/symbols'
 import { ExplainLine } from './ExplainLine'
 import s from './explain.module.css'
@@ -33,6 +33,8 @@ function LineThumb({ lineNo }: { lineNo: number }) {
 }
 
 export function RulesSummary({ compact }: { compact?: boolean }) {
+  const profile = useGame((g) => g.profile)
+  const RULE_SUMMARY = ruleSummary(profile)
   return (
     <div className={s.rules}>
       <h2 className={s.rulesTitle}>{compact ? '규칙 요약' : '슬롯머신 규칙 요약 — 먼저 읽고 SPIN을 눌러보세요'}</h2>

@@ -1,5 +1,5 @@
 import { useGame } from '../../store/gameStore'
-import { STATS_FOOTER } from '../../engine/explain'
+import { statsFooter } from '../../engine/explain'
 import { ExplainLine } from './ExplainLine'
 import { Section } from './Sections'
 import s from './explain.module.css'
@@ -46,6 +46,7 @@ function BalanceChart() {
 
 export function Stats() {
   const st = useGame((g) => g.stats)
+  const profile = useGame((g) => g.profile)
   const rtp = st.paid > 0 ? (st.won / st.paid) * 100 : 0
   const net = st.won - st.paid
   const cells: [string, string][] = [
@@ -70,7 +71,7 @@ export function Stats() {
       </div>
       <BalanceChart />
       <div className={s.footer}>
-        <ExplainLine sentence={STATS_FOOTER} />
+        <ExplainLine sentence={statsFooter(profile)} />
       </div>
     </Section>
   )
