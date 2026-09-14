@@ -4,5 +4,5 @@ services:
     image: edu-slot:latest
     container_name: edu-slot
     ports:
-      - "8080:80"
+      - "3013:80"
     restart: unless-stopped

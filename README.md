@@ -17,7 +17,7 @@ pnpm preview      # npm run preview
 ### 도커
 
 ```bash
-docker compose up --build   # → http://localhost:8080
+docker compose up --build   # → http://localhost:3013
 ```
 
 멀티스테이지 빌드(node → nginx). 최종 이미지는 nginx + `dist/` 정적 파일만 담습니다.
