@@ -1,0 +1,25 @@
+:root {
+  --bg: #0b0d14;
+  --panel: #13172a;
+  --panel-2: #1b2140;
+  --cab-metal: linear-gradient(180deg, #4a4f66 0%, #23273a 40%, #15182a 100%);
+  --cab-edge: #6a7091;
+  --neon: #ff3cac;
+  --neon-2: #2ad8ff;
+  --gold: #ffcf4a;
+  --gold-2: #ff9d1c;
+  --text: #e8ebf5;
+  --text-dim: #8b92b3;
+  --text-faint: #5d6485;
+  --win: #4dff9a;
+  --lose: #ff5e6e;
+  --warn: #ffb347;
+  --line-active: #ffd76a;
+  --line-inactive: #3a3f5c;
+  --cell-w: 108px;
+  --cell-h: 100px;
+  --cell-gap: 4px;
+  --machine-w: 700px;
+  --font: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+  --mono: 'SF Mono', 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
