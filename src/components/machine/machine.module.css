@@ -67,19 +67,26 @@
 .tabs {
   display: flex;
   gap: 6px;
+  align-items: stretch;
   padding: 0 2px;
+}
+.tabGroup {
+  display: flex;
+  gap: 3px;
+  flex: 1;
 }
 .tab {
   flex: 1;
-  padding: 7px 10px;
+  padding: 7px 4px;
   border-radius: 8px 8px 0 0;
   border: 1px solid #3a4066;
   border-bottom: none;
   background: #1a1e33;
   color: var(--text-dim);
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.5px;
+  font-size: 12.5px;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 .tabActive {
   background: linear-gradient(180deg, #2b3157, #1f2443);
@@ -87,20 +94,31 @@
   border-color: var(--neon-2);
   box-shadow: 0 -2px 12px rgba(42, 216, 255, 0.25);
 }
+.tabWays {
+  flex: 0 0 96px;
+}
+.tabWays.tabActive {
+  border-color: var(--neon);
+  box-shadow: 0 -2px 12px rgba(255, 60, 172, 0.3);
+}
+.tabDivider {
+  width: 1px;
+  margin: 4px 2px 0;
+  background: #3a4066;
+}
 .tab:disabled {
   opacity: 0.5;
 }
 .profileSwitch {
   display: flex;
   gap: 3px;
-  align-items: flex-end;
-  padding-bottom: 2px;
+  align-items: center;
 }
 .profileBtn {
-  padding: 5px 9px;
+  padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid #343a5e;
-  background: #1c2138;
+  border: 1px solid #4a3a6a;
+  background: #1a1030;
   color: var(--text-dim);
   font-size: 11px;
   font-weight: 700;
@@ -113,6 +131,12 @@
 }
 .profileBtn:disabled {
   opacity: 0.5;
+}
+.marqueeRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .reelArea {

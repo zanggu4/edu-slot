@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGame, currentBet, formatWon, type Denom } from '../../store/gameStore'
-import { totalBet, type BetPerLine, type PaylineSetId } from '../../engine/types'
-import { PAYLINE_SETS, getPaylineSet } from '../../engine/paylines'
+import { totalBet, type BetPerLine } from '../../engine/types'
+import { getPaylineSet } from '../../engine/paylines'
 import { sfx, setMuted } from '../../audio/sfx'
 import s from './machine.module.css'
 
@@ -99,32 +99,7 @@ export function ControlPanel() {
         {seg<BetPerLine>([1, 2, 5, 10], bet.betPerLine, g.setBetPerLine)}
       </div>
       <div className={s.box}>
-        <span className={s.label}>
-          {bet.mode === 'lines' ? (
-            <>
-              라인 수 ·{' '}
-              <select
-                className={s.select}
-                value={bet.paylineSet ?? g.paylineSet}
-                onChange={(e) => {
-                  sfx.click()
-                  g.setPaylineSet(e.target.value as PaylineSetId)
-                }}
-                disabled={locked}
-                aria-label="페이라인 세트"
-                title={set.origin}
-              >
-                {PAYLINE_SETS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} 세트
-                  </option>
-                ))}
-              </select>
-            </>
-          ) : (
-            '웨이'
-          )}
-        </span>
+        <span className={s.label}>{bet.mode === 'lines' ? `라인 수 · ${set.name} 세트` : '웨이'}</span>
         {bet.mode === 'lines' ? (
           seg<number>(set.lineOptions, bet.lines, g.setLines)
         ) : (

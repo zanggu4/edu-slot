@@ -1,53 +1,62 @@
 import { useGame } from '../../store/gameStore'
-import { PROFILES, type ProfileId } from '../../engine/reels'
+import { PAYLINE_SETS } from '../../engine/paylines'
+import type { PaylineSetId } from '../../engine/types'
 import { sfx } from '../../audio/sfx'
 import s from './machine.module.css'
 
+/** 판정 방식 탭: 페이라인 세트 6개 + 243 웨이즈 */
 export function ModeTabs() {
   const mode = useGame((g) => g.mode)
+  const paylineSet = useGame((g) => g.paylineSet)
   const setMode = useGame((g) => g.setMode)
+  const setPaylineSet = useGame((g) => g.setPaylineSet)
   const spinning = useGame((g) => g.spinning)
   const freeSpin = useGame((g) => g.freeSpin)
-  const profile = useGame((g) => g.profile)
-  const setProfile = useGame((g) => g.setProfile)
   const disabled = spinning || !!freeSpin
-  const tab = (m: 'lines' | 'ways', label: string) => (
-    <button
-      type="button"
-      className={[s.tab, mode === m ? s.tabActive : ''].join(' ')}
-      onClick={() => {
-        sfx.click()
-        setMode(m)
-      }}
-      disabled={disabled}
-      aria-pressed={mode === m}
-      title={disabled ? '프리스핀 중에는 모드를 바꿀 수 없습니다' : undefined}
-    >
-      {label}
-    </button>
-  )
+  const title = disabled ? '프리스핀 중에는 판정 방식을 바꿀 수 없습니다' : undefined
+
+  const pickLines = (id: PaylineSetId) => {
+    sfx.click()
+    if (mode !== 'lines') setMode('lines')
+    setPaylineSet(id)
+  }
+
   return (
-    <div className={s.tabs} role="tablist">
-      {tab('lines', '페이라인')}
-      {tab('ways', '243 웨이즈')}
-      <div className={s.profileSwitch} role="group" aria-label="기계 설정">
-        {(Object.keys(PROFILES) as ProfileId[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            className={[s.profileBtn, profile === id ? s.profileOn : ''].join(' ')}
-            onClick={() => {
-              sfx.click()
-              setProfile(id)
-            }}
-            disabled={disabled}
-            aria-pressed={profile === id}
-            title={PROFILES[id].description}
-          >
-            {PROFILES[id].name} {PROFILES[id].rtp}%
-          </button>
-        ))}
+    <div className={s.tabs} role="tablist" aria-label="판정 방식">
+      <div className={s.tabGroup}>
+        {PAYLINE_SETS.map((p) => {
+          const on = mode === 'lines' && paylineSet === p.id
+          return (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              className={[s.tab, on ? s.tabActive : ''].join(' ')}
+              onClick={() => pickLines(p.id)}
+              disabled={disabled}
+              aria-selected={on}
+              title={title ?? p.origin}
+            >
+              {p.name}
+            </button>
+          )
+        })}
       </div>
+      <span className={s.tabDivider} aria-hidden="true" />
+      <button
+        type="button"
+        role="tab"
+        className={[s.tab, s.tabWays, mode === 'ways' ? s.tabActive : ''].join(' ')}
+        onClick={() => {
+          sfx.click()
+          setMode('ways')
+        }}
+        disabled={disabled}
+        aria-selected={mode === 'ways'}
+        title={title ?? '페이라인 없이 인접 릴 조합으로 판정. 웨이당 베팅 = 총 베팅 ÷ 25'}
+      >
+        243 웨이즈
+      </button>
     </div>
   )
 }
