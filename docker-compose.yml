@@ -1,0 +1,8 @@
+services:
+  slot:
+    build: .
+    image: edu-slot:latest
+    container_name: edu-slot
+    ports:
+      - "8080:80"
+    restart: unless-stopped
